@@ -8,43 +8,69 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CategoryService {
-
     private final CategoryRepository categoryRepository;
+    private final CategoryValidator validator;
+    private final CategoryHierarchyManager hierarchyManager;
 
     @Transactional
     public Category createCategory(String name, Long parentId) {
+        Category parent = parentId != null
+                ? getCategoryById(parentId)
+                : null;
+
+        validator.validateNameUniqueness(name, parent);
+
         Category category = new Category(name);
+        hierarchyManager.updateParent(category, parent);
 
-        if (parentId != null) {
-            Category parent = categoryRepository.findById(parentId)
-                    .orElseThrow(() -> new EntityNotFoundException("Parent category not found"));
+        return categoryRepository.save(category);
+    }
 
-            if (categoryRepository.existsByNameAndParent(name, parent)) {
-                throw new IllegalStateException("Category name must be unique within parent");
-            }
+    @Transactional
+    public Category updateCategory(Long id, String newName, Long newParentId) {
+        Category category = getCategoryById(id);
+        Category newParent = newParentId != null
+                ? getCategoryById(newParentId)
+                : null;
 
-            parent.addChild(category);
-        } else {
-            if (categoryRepository.existsByNameAndParent(name, null)) {
-                throw new IllegalStateException("Root category name must be unique");
-            }
+        // Обновление имени
+        if (newName != null && !newName.isBlank()) {
+            validator.validateNameUniqueness(newName, newParent != null ? newParent : category.getParent());
+            category.setName(newName);
+        }
+
+        // Обновление родителя
+        if (!Objects.equals(category.getParent(), newParent)) {
+            hierarchyManager.updateParent(category, newParent);
         }
 
         return categoryRepository.save(category);
     }
 
     @Transactional
-    public void deleteCategoryWithChildren(Long id) {
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Category not found"));
+    public void deleteCategory(Long id) {
+        Category category = getCategoryById(id);
+        hierarchyManager.updateParent(category, null);
         categoryRepository.delete(category);
     }
 
-    public List<Category> getFullTree() {
-        return categoryRepository.findRootCategories();
+    public Category getCategoryById(Long id) {
+        return categoryRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Категория с ID %d не найдена".formatted(id)
+                ));
+    }
+
+    public List<Category> getChildren(Long parentId) {
+        return parentId != null
+                ? getCategoryById(parentId).getChildren()
+                : categoryRepository.findByParentIsNull();
     }
 }
+
