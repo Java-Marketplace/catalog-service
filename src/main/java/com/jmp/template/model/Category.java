@@ -2,6 +2,7 @@ package com.jmp.template.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,10 +17,14 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 import java.util.ArrayList;
@@ -28,11 +33,13 @@ import java.util.List;
 @Entity
 @Table(name = "categories",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_category_parent_name",
-                columnNames = {"parent_id", "name"}))
+                name = "uk_category_name",
+                columnNames = {"name"})) // Уникальность по имени
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class Category {
 
     @Id
@@ -41,19 +48,17 @@ public class Category {
 
     @NotBlank
     @Size(max = 255)
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true) // Уникальное имя
     private String name;
 
-    @JsonBackReference
+    @JsonBackReference // Указывает, что это "ведомая" сторона связи
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_id", foreignKey = @ForeignKey(name = "fk_category_parent"))
-    private Category parent;
+    @JoinColumn(name = "parent_id",
+            foreignKey = @ForeignKey(name = "fk_category_parent"))
+    private Category parent; // Ссылка на родительскую категорию
 
-    @JsonManagedReference
+    @JsonManagedReference // Указывает, что это "ведущая" сторона связи
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Category> children = new ArrayList<>();
 
-    public Category(String name) {
-        this.name = name;
-    }
 }
