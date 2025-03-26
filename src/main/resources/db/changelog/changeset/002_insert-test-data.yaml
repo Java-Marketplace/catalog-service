@@ -1,0 +1,41 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2
+      author: Kostyanchik
+      changes:
+        - insert:
+            tableName: category
+            columns:
+              - column:
+                  name: name
+                  value: "Electronics"
+              - column:
+                  name: parent_id
+                  value: null
+        - insert:
+            tableName: category
+            columns:
+              - column:
+                  name: name
+                  value: "Smartphones"
+              - column:
+                  name: parent_id
+                  value: 1
+        - insert:
+            tableName: category
+            columns:
+              - column:
+                  name: name
+                  value: "Apple"
+              - column:
+                  name: parent_id
+                  value: 2
+        - insert:
+            tableName: category
+            columns:
+              - column:
+                  name: name
+                  value: "Personal Computer"
+              - column:
+                  name: parent_id
+                  value: 1

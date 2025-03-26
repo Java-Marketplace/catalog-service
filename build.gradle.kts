@@ -42,7 +42,13 @@ dependencies {
     annotationProcessor("org.mapstruct:mapstruct-processor:${property("mapstruct.version")}")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("com.h2database:h2")
+    testImplementation("com.github.database-rider:rider-spring:${property("database-rider.version")}")
+    testImplementation("org.testcontainers:postgresql")
+    testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.springframework.boot:spring-boot-starter-webflux")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+
 }
 
 tasks.withType<Test> {
@@ -79,6 +85,22 @@ tasks.jacocoTestReport {
 
 tasks.test {
     finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.register<Test>("unitTest") {
+    description = "Runs unit tests"
+    group = "verification"
+    useJUnitPlatform {
+        includeTags("unit")
+    }
+}
+
+tasks.register<Test>("integrationTest") {
+    description = "Runs integration tests"
+    group = "verification"
+    useJUnitPlatform {
+        includeTags("integration")
+    }
 }
 
 tasks.named("build") {
