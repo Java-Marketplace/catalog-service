@@ -1,4 +1,11 @@
+server:
+  port: 9191
+
 spring:
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
   application:
     name: catalog-service
 
@@ -19,3 +26,9 @@ spring:
         show_sql: true
     hibernate:
       ddl-auto: none
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+  packages-to-scan: com.jmp.catalogservice.controller
